@@ -1,15 +1,49 @@
-spring.application.name: code-challenge
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/codechallenge_db
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+  application:
+    name: notification-service
 
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-main.yaml
+
+# =========================================================
+# Logging
+# =========================================================
 logging:
+  file:
+    name: logs/app.log   # Logback will use this via ${LOG_FILE}
+
   level:
-   org.hibernate.SQL: DEBUG
-   org.springdoc: DEBUG
+    root: INFO
+    org.springdoc: INFO
+    org.hibernate.SQL: INFO
+
+# =========================================================
+# Actuator & Metrics
+# =========================================================
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health, info, metrics, prometheus
+
+  endpoint:
+    health:
+      show-details: always
+
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        notification.processing: true
+
+# =========================================================
+# Server
+# =========================================================
+server:
+  port: 8080
+  shutdown: graceful

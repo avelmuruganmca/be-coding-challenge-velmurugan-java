@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://qa-db-host:5432/codechallenge_qa
+    username: qa_user
+    password: qa_password
+    driver-class-name: org.postgresql.Driver
+
+logging:
+  level:
+    org.hibernate.SQL: INFO

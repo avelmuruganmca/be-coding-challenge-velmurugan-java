@@ -1,108 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true">
 
-    <!-- =============================== -->
-    <!-- Properties -->
-    <!-- =============================== -->
+    <!-- ===================================================== -->
+    <!-- Spring Properties                                     -->
+    <!-- ===================================================== -->
 
-    <property name="LOG_PATH" value="logs"/>
-    <property name="SERVICE_NAME" value="${spring.application.name:-code-challenge}"/>
+    <springProperty scope="context"
+                    name="APP_NAME"
+                    source="spring.application.name"
+                    defaultValue="notification-service"/>
 
-    <!-- =============================== -->
-    <!-- Console Appender -->
-    <!-- =============================== -->
+    <!-- Spring Boot exposes LOG_FILE if logging.file.name is set -->
+    <property name="LOG_FILE" value="${LOG_FILE:-app.log}"/>
 
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- ===================================================== -->
+    <!-- Console Appender                                      -->
+    <!-- ===================================================== -->
+
+    <appender name="CONSOLE"
+              class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
-                %d{ISO8601} %-5level {%thread} [%-40.40logger{39}] [clientIp=%X{clientIp}] [traceId=%X{traceId}] %m%n%ex
+                %d{ISO8601} %-5level {%thread} [%-40.40logger{39}] [traceId=%X{traceId}] %m%n%ex
             </pattern>
         </encoder>
     </appender>
 
-    <!-- =============================== -->
-    <!-- Rolling File Appender (Application Logs) -->
-    <!-- =============================== -->
+    <!-- ===================================================== -->
+    <!-- Rolling File Appender                                 -->
+    <!-- ===================================================== -->
 
-    <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/application.log</file>
+    <appender name="ROLLING_FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <file>${LOG_FILE}</file>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- Daily rollover + index -->
             <fileNamePattern>
-                ${LOG_PATH}/archive/application.%d{yyyy-MM-dd}.%i.log
+                ${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz
             </fileNamePattern>
-
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>120</maxHistory>
-            <totalSizeCap>5GB</totalSizeCap>
+            <maxFileSize>100KB</maxFileSize>
+            <maxHistory>30</maxHistory>
         </rollingPolicy>
 
         <encoder>
             <pattern>
-                %d{ISO8601} %-5level {%thread} [%-40.40logger{39}] [clientIp=%X{clientIp}] [traceId=%X{traceId}] %m%n%ex
+                %d{ISO8601} %-5level {%thread} [%-40.40logger{39}] [traceId=%X{traceId}] %m%n%ex
             </pattern>
         </encoder>
     </appender>
 
-    <!-- =============================== -->
-    <!-- Access Log Appender -->
-    <!-- =============================== -->
+    <!-- ===================================================== -->
+    <!-- Async Wrapper                                         -->
+    <!-- ===================================================== -->
 
-    <appender name="ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/access.log</file>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>
-                ${LOG_PATH}/archive/access.%d{yyyy-MM-dd}.%i.log
-            </fileNamePattern>
-
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>120</maxHistory>
-            <totalSizeCap>5GB</totalSizeCap>
-        </rollingPolicy>
-
-        <encoder>
-            <pattern>
-                %d{ISO8601} %-5level [service=${SERVICE_NAME}] [traceId=%X{traceId}] [method=%X{method}] [path=%X{path}] [clientIp=%X{clientIp}] %m%n
-            </pattern>
-        </encoder>
-    </appender>
-
-    <!-- =============================== -->
-    <!-- Async Appenders (Enterprise Standard) -->
-    <!-- =============================== -->
-
-    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+    <appender name="ASYNC_FILE"
+              class="ch.qos.logback.classic.AsyncAppender">
         <appender-ref ref="ROLLING_FILE"/>
         <queueSize>5000</queueSize>
         <discardingThreshold>0</discardingThreshold>
     </appender>
 
-    <appender name="ASYNC_ACCESS" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="ACCESS_FILE"/>
-        <queueSize>2000</queueSize>
-        <discardingThreshold>0</discardingThreshold>
-    </appender>
+    <!-- ===================================================== -->
+    <!-- Root Logger                                           -->
+    <!-- ===================================================== -->
 
-    <!-- =============================== -->
-    <!-- Loggers -->
-    <!-- =============================== -->
-
-    <!-- Application Logs -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="ASYNC_FILE"/>
     </root>
-
-    <!-- Access Logger -->
-    <logger name="ACCESS_LOGGER" level="INFO" additivity="false">
-        <appender-ref ref="ASYNC_ACCESS"/>
-    </logger>
-
-    <!-- Reduce Noise -->
-    <logger name="org.springframework" level="INFO"/>
-    <logger name="org.hibernate" level="WARN"/>
-    <logger name="org.apache.catalina" level="WARN"/>
 
 </configuration>
