@@ -3,8 +3,10 @@
 A REST API for managing user notification preferences and delivering notifications based on category subscriptions. Built with Spring Boot 3.5, Java 21, and PostgreSQL.
 
 > **Modifications from original code challenge:**
-> 1. **Package name** – Changed to `de.dkb.api.notificationhub` (non-standard convention).
-> 2. **API name** – Updated in line with OpenAPI standards.
+> 1. **Package name** – `de.dkb.api.codeChallenge` → `de.dkb.api.notificationhub` (non-standard convention).
+> 2. **API name** – Endpoints updated per OpenAPI/REST conventions:  
+>    - `POST /api/v1/register` → `POST /api/v1/subscriptions`  
+>    - `POST /api/v1/notify` → `POST /api/v1/notifications`
 
 ---
 
@@ -192,18 +194,17 @@ curl -X POST -H "Content-Type: application/json" \
 ```
 src/main/java/de/dkb/api/notificationhub/
 ├── NotificationServiceApplication.java
-└── notification/
-    ├── common/           # Shared response models, messages
-    ├── config/           # Security, OpenAPI, filters, startup validator
-    ├── controller/       # REST endpoints
-    ├── domain/           # Category, NotificationType
-    ├── entity/           # JPA entities
-    ├── exception/        # Domain exceptions, error codes
-    ├── handler/          # Global exception handler
-    ├── kafka/            # Kafka consumer (optional, disabled by default)
-    ├── model/            # DTOs, request/response, validation
-    ├── repository/       # JPA repositories
-    └── service/          # Business logic, strategies, processor
+├── common/               # Shared response models, messages
+├── config/               # Security, OpenAPI, filters, startup validator
+├── controller/           # REST endpoints
+├── domain/               # Category, NotificationType
+├── entity/               # JPA entities
+├── exception/            # Domain exceptions, error codes, GlobalExceptionHandler
+├── kafka/                # Kafka consumer (optional, disabled by default)
+├── mapper/               # Entity ↔ DTO conversion (OpenAPI separation)
+├── model/                # DTOs, request/response, validation
+├── repository/           # JPA repositories
+└── service/              # Business logic, strategies, processor
 ```
 
 ---
