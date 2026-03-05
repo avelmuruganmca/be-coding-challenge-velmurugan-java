@@ -1,0 +1,17 @@
+spring:
+  config:
+    activate:
+      on-profile: testcontainers
+
+  cloud:
+    config:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
+  liquibase:
+    enabled: false
