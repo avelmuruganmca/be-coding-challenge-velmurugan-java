@@ -292,6 +292,17 @@ Errors use a consistent format:
 
 Requests include an `X-Trace-Id` header for tracing.
 
+### Grafana Dashboard
+
+When running with Docker Compose, Grafana starts with a pre-provisioned **Notification Service Dashboard**:
+
+- **Grafana UI:** http://localhost:3000 (default login: admin / admin)
+- **Dashboard:** Dashboards → Notification Service Dashboard
+
+The dashboard includes:
+- **Overview:** Success count, error count, success rate %, RPS, P95 latency, application errors
+- **Application metrics:** Success vs errors over time, notifications by type (pie), processing duration percentiles (P50/P95/P99), errors by error code, HTTP rate by endpoint, errors by notification type, HTTP avg latency
+
 ---
 
 ## Code Challenge
