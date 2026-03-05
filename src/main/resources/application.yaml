@@ -1,14 +1,18 @@
 spring:
   application:
-    name: notification-service
+    name: code-challenge
+
+  cloud:
+    config:
+      import-check:
+        enabled: false
 
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-main.yaml
 
-# =========================================================
+
 # Logging
-# =========================================================
 logging:
   file:
     name: logs/app.log   # Logback will use this via ${LOG_FILE}
@@ -18,9 +22,7 @@ logging:
     org.springdoc: INFO
     org.hibernate.SQL: INFO
 
-# =========================================================
 # Actuator & Metrics
-# =========================================================
 management:
   endpoints:
     web:
@@ -41,9 +43,7 @@ management:
         http.server.requests: true
         notification.processing: true
 
-# =========================================================
 # Server
-# =========================================================
 server:
   port: 8080
   shutdown: graceful

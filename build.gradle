@@ -14,7 +14,7 @@ java {
 }
 
 springBoot {
-    mainClass = 'de.dkb.api.notificationhub.NotificationServiceApplication'
+    mainClass = 'de.dkb.api.codeChallenge.CodeChallengeApplication'
 }
 
 ext {

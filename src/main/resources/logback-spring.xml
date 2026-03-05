@@ -1,21 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true">
 
-    <!-- ===================================================== -->
-    <!-- Spring Properties                                     -->
-    <!-- ===================================================== -->
 
+    <!-- Spring Properties                                     -->
     <springProperty scope="context"
                     name="APP_NAME"
                     source="spring.application.name"
-                    defaultValue="notification-service"/>
+                    defaultValue="code-challenge"/>
 
     <!-- Spring Boot exposes LOG_FILE if logging.file.name is set -->
     <property name="LOG_FILE" value="${LOG_FILE:-app.log}"/>
 
-    <!-- ===================================================== -->
     <!-- Console Appender                                      -->
-    <!-- ===================================================== -->
 
     <appender name="CONSOLE"
               class="ch.qos.logback.core.ConsoleAppender">
@@ -26,9 +22,7 @@
         </encoder>
     </appender>
 
-    <!-- ===================================================== -->
     <!-- Rolling File Appender                                 -->
-    <!-- ===================================================== -->
 
     <appender name="ROLLING_FILE"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -50,9 +44,7 @@
         </encoder>
     </appender>
 
-    <!-- ===================================================== -->
     <!-- Async Wrapper                                         -->
-    <!-- ===================================================== -->
 
     <appender name="ASYNC_FILE"
               class="ch.qos.logback.classic.AsyncAppender">
@@ -61,9 +53,7 @@
         <discardingThreshold>0</discardingThreshold>
     </appender>
 
-    <!-- ===================================================== -->
     <!-- Root Logger                                           -->
-    <!-- ===================================================== -->
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

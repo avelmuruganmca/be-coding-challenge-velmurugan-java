@@ -2,11 +2,15 @@
 
 A REST API for managing user notification preferences and delivering notifications based on category subscriptions. Built with Spring Boot 3.5, Java 21, and PostgreSQL.
 
-> **Modifications from original code challenge:**
-> 1. **Package name** – `de.dkb.api.codeChallenge` → `de.dkb.api.notificationhub` (non-standard convention).
-> 2. **API name** – Endpoints updated per OpenAPI/REST conventions:  
->    - `POST /api/v1/register` → `POST /api/v1/subscriptions`  
->    - `POST /api/v1/notify` → `POST /api/v1/notifications`
+---
+
+> **Recommendations – Best Practices**
+>
+> The following improvements can be considered as part of best practices:
+>
+> 1. **Base package** – The base package is currently `de.dkb.api.codeChallenge` (camelCase). It can be renamed to `de.dkb.api.codechallenge` (all lowercase) to align with Java package naming conventions.
+>
+> 2. **API endpoints** – The endpoints `POST /api/v1/register` and `POST /api/v1/notify` can be renamed to `POST /api/v1/subscriptions` and `POST /api/v1/notifications` respectively for clearer REST resource naming.
 
 ---
 
@@ -43,30 +47,36 @@ Subscribing to any type in a category allows receiving all notifications within 
 
 ---
 
-## Quick Start
+## Quick Start with Docker Compose
 
-### 1. Build
+### 1. Build the JAR
 
 ```bash
 ./gradlew build
 ```
 
-### 2. Start PostgreSQL
+### 2. Start all services
 
 ```bash
 docker compose up -d
 ```
 
-### 3. Run Application (Dev Profile)
+This starts:
+- **PostgreSQL** (port 5432)
+- **Application** (port 8080)
+- **Prometheus** (port 9090)
+- **Grafana** (port 3000)
+
+### 3. Stop services
 
 ```bash
-./gradlew bootRun --args='--spring.profiles.active=dev'
+docker compose stop
 ```
 
-Or using an environment variable:
+Or to stop and remove containers:
 
 ```bash
-SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+docker compose down
 ```
 
 ### 4. Verify
@@ -77,38 +87,44 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 
 ---
 
-## Docker Commands (Start / Stop)
+## Database – Verify Liquibase & Data
 
-### PostgreSQL (Database)
-
-| Action | Command |
-|--------|---------|
-| **Start** (background) | `docker compose up -d` |
-| **Stop** | `docker compose stop` |
-| **Stop and remove containers** | `docker compose down` |
-| **View status** | `docker compose ps` |
-| **View logs** | `docker compose logs -f postgres` |
-
-### Spring Boot Application
-
-The application runs via Gradle, not Docker. To stop it:
-
-| Action | Command |
-|--------|---------|
-| **Stop** | Press `Ctrl+C` in the terminal where `bootRun` is running |
-| **Stop (if running in background)** | `pkill -f NotificationServiceApplication` |
-
-### Full Start / Stop Example
+### Connect to PostgreSQL
 
 ```bash
-# Start everything
-docker compose up -d
-./gradlew bootRun --args='--spring.profiles.active=dev'
+docker exec -it codechallenge_postgres psql -U postgres -d codechallenge_db
+```
 
-# Stop (in another terminal)
-# 1. Stop the Spring Boot app: Ctrl+C (or pkill -f NotificationServiceApplication)
-# 2. Stop PostgreSQL
-docker compose stop
+### List tables
+
+```
+\dt
+```
+
+### List data in users table
+
+```sql
+SELECT * FROM users;
+```
+
+Or to check Liquibase changelog history:
+
+```sql
+SELECT id, author, filename, dateexecuted FROM databasechangelog ORDER BY dateexecuted;
+```
+
+---
+
+## Alternative: Local Development (Gradle)
+
+For local development without Docker for the app:
+
+```bash
+# 1. Start PostgreSQL only
+docker compose up -d postgres
+
+# 2. Run application with Gradle
+./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
 ---
@@ -117,7 +133,7 @@ docker compose stop
 
 ### Register User
 
-**POST** `/api/v1/subscriptions`
+**POST** `/api/v1/register`
 
 Register a user with notification preferences.
 
@@ -144,7 +160,7 @@ Register a user with notification preferences.
 
 ### Send Notification
 
-**POST** `/api/v1/notifications`
+**POST** `/api/v1/notify`
 
 Send a notification to a user.
 
@@ -173,17 +189,29 @@ Send a notification to a user.
 
 ---
 
+## Postman Collection
+
+A Postman collection covering all API use cases is in `postman/Notification-API.postman_collection.json`. Import it into Postman to test:
+
+- **Register**: success (multiple types, single type, Category B), 400 (invalid/unsupported type, empty body, invalid UUID)
+- **Notify**: success (subscribed user, category delivery), 404 (user not found), 403 (not subscribed), 400 (invalid type, validation, invalid UUID)
+- **Full flow**: Register → Notify (runs Step 1, captures userId, runs Step 2)
+
+Set `baseUrl` to `http://localhost:8080` (or your server). For notify success cases, run the corresponding register request first with the same `userId`.
+
+---
+
 ## Example cURL Commands
 
 ```bash
 # Register user with preferences
 curl -X POST -H "Content-Type: application/json" \
-  http://localhost:8080/api/v1/subscriptions \
+  http://localhost:8080/api/v1/register \
   -d '{"userId": "bcce103d-fc52-4a88-90d3-9578e9721b36", "notifications": ["type1","type5"]}'
 
 # Send notification
 curl -X POST -H "Content-Type: application/json" \
-  http://localhost:8080/api/v1/notifications \
+  http://localhost:8080/api/v1/notify \
   -d '{"userId": "bcce103d-fc52-4a88-90d3-9578e9721b36", "notificationType": "type5", "message": "Your app rocks!"}'
 ```
 
@@ -192,19 +220,21 @@ curl -X POST -H "Content-Type: application/json" \
 ## Project Structure
 
 ```
-src/main/java/de/dkb/api/notificationhub/
-├── NotificationServiceApplication.java
-├── common/               # Shared response models, messages
-├── config/               # Security, OpenAPI, filters, startup validator
-├── controller/           # REST endpoints
-├── domain/               # Category, NotificationType
-├── entity/               # JPA entities
-├── exception/            # Domain exceptions, error codes, GlobalExceptionHandler
-├── kafka/                # Kafka consumer (optional, disabled by default)
-├── mapper/               # Entity ↔ DTO conversion (OpenAPI separation)
-├── model/                # DTOs, request/response, validation
-├── repository/           # JPA repositories
-└── service/              # Business logic, strategies, processor
+src/main/java/de/dkb/api/codeChallenge/
+├── CodeChallengeApplication.java
+└── notification/
+    ├── common/           # GenericResponse, ApiMessages
+    ├── config/           # Security, OpenAPI, filters, startup validator
+    ├── controller/       # REST endpoints
+    │   ├── dto/           # request, response, validation
+    │   └── exception/     # ErrorCode, domain exceptions
+    ├── domain/            # Category, NotificationType
+    ├── entity/            # JPA User entity
+    ├── handler/           # GlobalExceptionHandler
+    ├── kafka/             # Kafka consumer (optional, disabled by default)
+    ├── mapper/            # Entity ↔ DTO conversion
+    ├── repository/        # UserRepository
+    └── service/           # Business logic, strategies, processor
 ```
 
 ---
@@ -226,7 +256,7 @@ src/main/java/de/dkb/api/notificationhub/
 ./gradlew test
 ```
 
-Integration tests use H2 with the `test` profile. Ensure `testRuntimeOnly 'com.h2database:h2'` is in `build.gradle`.
+Integration tests use H2 with the `test` profile.
 
 ---
 
@@ -244,22 +274,21 @@ Errors use a consistent format:
 }
 ```
 
-| Error Code   | HTTP Status | Description                           |
-|--------------|-------------|---------------------------------------|
-| `VAL-001`    | 400         | Validation failed                     |
-| `USR-404`    | 404         | User not found                        |
-| `USR-403`    | 403         | User not subscribed to notification   |
-| `NOT-400`    | 400         | Invalid notification type             |
-| `NOT-401`    | 400         | Unsupported notification type        |
+| Error Code   | HTTP Status | Description                                         |
+|--------------|-------------|-----------------------------------------------------|
+| `VAL-001`    | 400         | Validation failed (invalid UUID, enum, or payload)  |
+| `USR-404`    | 404         | User not found                                      |
+| `USR-403`    | 403         | User not subscribed to notification                 |
+| `NOT-401`    | 400         | Unsupported notification type                      |
 
 ---
 
 ## Observability
 
-- **Health:** `http://localhost:8080/actuator/health`  
-- **Info:** `http://localhost:8080/actuator/info`  
-- **Metrics:** `http://localhost:8080/actuator/metrics`  
-- **Prometheus:** `http://localhost:8080/actuator/prometheus`  
+- **Health:** http://localhost:8080/actuator/health  
+- **Info:** http://localhost:8080/actuator/info  
+- **Metrics:** http://localhost:8080/actuator/metrics  
+- **Prometheus:** http://localhost:8080/actuator/prometheus  
 
 Requests include an `X-Trace-Id` header for tracing.
 
